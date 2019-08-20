@@ -11,6 +11,7 @@
 #include <sys/epoll.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <deque>
 #include <iostream>
 #include "Operation.h"
 #include "Thread.h"
@@ -116,10 +117,18 @@ int main(int argc,char* argv[])
                         // book["des"] = "1";
                         // std::string body = book.toStyledString();
                         // std::cout<<book["name"]<<std::endl;
-                        CTask* ta=new Operation;       //  具体的方法自己实现。
-                        ta->SetConnFd(pevents[i].data.fd);
+                        Json::Reader reader;
+                        Json::Value data;
+                        reader.parse(buf, data, false);
+                        Operation* ta=new Operation;       //  具体的方法自己实现。
                         
+                        ta->SetConnFd(pevents[i].data.fd);
+                        ta->setOpt(Otype::ADD);
+                        ta->SetConnFd(pevents[i].data.fd);
+                        // std::string s = ;
+                        ta->setDoing(data["name"].asString());
                         pool->AddTask(ta);
+                        
                     }
                     
                     // printf("received data: %s", buf);
@@ -132,7 +141,16 @@ int main(int argc,char* argv[])
                 }
                 else if(pevents[i].events & EPOLLOUT) {  //write
                     sockfd = pevents[i].data.fd;
-                    write(sockfd, buf, n);
+                    std::deque<std::pair<bool,std::string>> result = pool->getResuleQueue(sockfd);
+                    string s;
+                    
+                    for(auto iter = result.begin();iter!=result.end();iter++){
+                        s += iter->first?"success":"failed";
+                        s += " ";
+                        s += iter->second;
+                        s += "\n";
+                    }
+                    write(sockfd, s.c_str(), s.size());
 
                     // printf("written data: %s", buf);
 
@@ -150,6 +168,7 @@ int main(int argc,char* argv[])
     {
         fputs("malloc() error",stderr);
     }
+    pool->StopAll();
     close(ep_fd);
     close(serv_sock);
     return 0;

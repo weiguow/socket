@@ -1,2 +1,4 @@
 *.idea/
 *.o
+client
+*.0

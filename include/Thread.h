@@ -8,6 +8,11 @@
 #include <deque>
 #include <string>  
 #include <pthread.h>  
+#ifdef __GNUC__
+#include <ext/hash_map>
+#else
+#include <hash_map>
+#endif
   
 using namespace std;  
   
@@ -22,7 +27,7 @@ protected:
 public:
     CTask() = default;
     CTask(string &taskName): m_strTaskName(taskName), connfd(0) {}
-    virtual int Run() = 0;
+    virtual pair<bool,std::string> Run(pthread_t) = 0;
     void SetConnFd(int data);   //设置接收的套接字连接号。
     int GetConnFd();
     virtual ~CTask() {}
@@ -45,6 +50,7 @@ private:
       
     static pthread_mutex_t m_pthreadMutex;    /** 线程同步锁 */  
     static pthread_cond_t m_pthreadCond;      /** 线程同步的条件变量 */  
+	static __gnu_cxx::hash_map<int,deque<pair<bool,std::string>>> taskMap;
   
 protected:  
     static void* ThreadFunc(void * threadData); /** 新线程的线程回调函数 */  
@@ -58,7 +64,10 @@ public:
 	~CThreadPool();
     int AddTask(CTask *task);      /** 把任务添加到任务队列中 */  
     int StopAll();                 /** 使线程池中的线程退出 */  
-    int getTaskSize();             /** 获取当前任务队列中的任务数 */  
+    int getTaskSize();             /** 获取当前任务队列中的任务数 */
+    deque<pair<bool,std::string>> getResuleQueue(int sockid){
+		return taskMap[sockid];
+	}  
 };  
 
 // 代理类,只暴露给别人用的

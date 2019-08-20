@@ -25,6 +25,7 @@ int CTask::GetConnFd()
 */
 deque<CTask*> CThreadPool::m_deqTaskList;         //任务列表  
 bool CThreadPool::shutdown = false;  
+__gnu_cxx::hash_map<int,deque<pair<bool,std::string>>> CThreadPool::taskMap;
       
 pthread_mutex_t CThreadPool::m_pthreadMutex = PTHREAD_MUTEX_INITIALIZER;   
 pthread_cond_t CThreadPool::m_pthreadCond = PTHREAD_COND_INITIALIZER;  
@@ -35,7 +36,7 @@ pthread_cond_t CThreadPool::m_pthreadCond = PTHREAD_COND_INITIALIZER;
 CThreadPool::CThreadPool(int threadNum)  
 {  
     this->m_iThreadNum = threadNum;  
-    cout << "I will create " << threadNum << " threads" << endl;  
+    //cout << "I will create " << threadNum << " threads" << endl;  
     Create();       //*创建对象时便创建线程。
 }
  
@@ -52,6 +53,7 @@ CThreadPool::~CThreadPool()
 void* CThreadPool::ThreadFunc(void* threadData)  
 {  
     pthread_t tid = pthread_self();  
+    pair<bool,std::string> result;
     while (1)  
     {  
  
@@ -66,11 +68,11 @@ void* CThreadPool::ThreadFunc(void* threadData)
         if (shutdown)  
         {  
             pthread_mutex_unlock(&m_pthreadMutex);  
-            printf("thread %lu will exit\n", pthread_self());  
+            //printf("thread %lu will exit\n", pthread_self());  
             pthread_exit(NULL);   
         }  
           
-        printf("tid %lu run\n", tid);  
+        //printf("tid %lu run\n", tid);  
             
         /** 
         * 取任务队列并处理之 
@@ -83,8 +85,9 @@ void* CThreadPool::ThreadFunc(void* threadData)
         //* 取完任务后释放锁*/
         pthread_mutex_unlock(&m_pthreadMutex);  
           
-        task->Run(); /** 执行任务 */  
-         
+        result = task->Run(tid); /** 执行任务 */  
+        taskMap[task->GetConnFd()].push_back(result);
+        
     }  
     return (void*)0;  
 }  
@@ -134,7 +137,7 @@ int CThreadPool::StopAll()
     {  
         return -1;    
     }  
-    printf("Now I will end all threads!!\n");  
+    //printf("Now I will end all threads!!\n");  
     /** 唤醒所有等待线程，线程池要销毁了 */  
     shutdown = true;  
     pthread_cond_broadcast(&m_pthreadCond);  
