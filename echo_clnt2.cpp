@@ -17,7 +17,7 @@
 void error_handling(const char* message,const int sock_port);
 void read_handling(const int sock);
 void write_handling(const int sock);
-
+std::string user_operator();
 int main(int argc,char* argv[])
 {
     int sock;
