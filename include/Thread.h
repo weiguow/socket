@@ -65,9 +65,7 @@ public:
     int AddTask(CTask *task);      /** 把任务添加到任务队列中 */  
     int StopAll();                 /** 使线程池中的线程退出 */  
     int getTaskSize();             /** 获取当前任务队列中的任务数 */
-    deque<pair<bool,std::string>> getResuleQueue(int sockid){
-		return taskMap[sockid];
-	}  
+    std::string getResult(int sockid);
 };  
 
 // 代理类,只暴露给别人用的

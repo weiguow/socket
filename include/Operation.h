@@ -5,6 +5,9 @@
 #pragma once
 #include "Thread.h"
 #include <string>
+#include "json/json.h"
+#include "Book.h"
+
 enum Otype{
     ADD,
     DELETE,
@@ -17,6 +20,7 @@ private:
     /* data */
     Otype opt;
     std::string sDoing;
+    Json::Value jData;
 public:
     Operation(/* args */);
     ~Operation();
@@ -29,5 +33,14 @@ public:
         sDoing = sTemp;
         return 0;
     };
+    inline int setData(Json::Value Data){
+        jData = Data;
+        return 0;
+    }
+private:
+    int add(Book b);
+    int delete_book(int bId);
+    int modify(int bId);
+    Book search(int bId);
 };
 

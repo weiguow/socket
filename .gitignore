@@ -2,3 +2,4 @@
 *.o
 client
 *.0
+*.vscode/

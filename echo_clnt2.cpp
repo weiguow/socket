@@ -54,19 +54,19 @@ int main(int argc,char* argv[])
 //写进程
 void write_handling(int sock)
 {
-    char buf[BUF_SIZE];
+    //char buf[BUF_SIZE];
     while(1)
     {   
-        memset(buf,0,BUF_SIZE);
+        //memset(buf,0,BUF_SIZE);
         std::string body = user_operator();
         //std::cout<<book["name"]<<std::endl;
-        write(sock,body.c_str(),strlen(body.c_str()));
-        if(!strcmp(buf,"q\n")||
-           !strcmp(buf,"Q\n"))
+        if(body == "q")
         {
             shutdown(sock,SHUT_WR);
             return;
         }
+        if(!body.empty())
+            write(sock,body.c_str(),body.size());
     }
 }
 
@@ -106,6 +106,7 @@ std::string user_operator() {
     std::string book_name;  //书名
     std::string book_author;    //作者
     std::string book_des;   //简介
+    std::string sTemp;
 
     std::cout << "===请选择操作编号====\n"
          << "1.新增图书\n"
@@ -113,7 +114,10 @@ std::string user_operator() {
          << "3.改动图书\n"
          << "4.查询图书\n"
          << "输入编号：" << std::endl;
-    std::cin >> operat_type;
+    std::cin >> sTemp;
+    if(sTemp == "q" || sTemp == "Q")
+        return "q";
+    operat_type = atoi(sTemp.c_str());
 
     Json::Value book;
     std::string sbook;
@@ -199,7 +203,7 @@ std::string user_operator() {
                 sbook = book.toStyledString();
                 book.clear();
                 break;
-        default:std::cout << "The operating erro!" << std::endl;break;
+        default:std::cout << "The operating erro!" << std::endl;sbook = "";break;
         }
     return sbook;
 }

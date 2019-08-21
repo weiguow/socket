@@ -23,7 +23,7 @@
 
 void error_handler_socket(const char* message,const int port);
 void error_handler_epoll(const char* message,const int socket_port,const int epoll_fd);
-
+//void send_socket(epoll_event &events,epoll_event &event2,);
 int main(int argc,char* argv[])
 {
     int serv_sock = 0,clnt_sock,sockfd;
@@ -104,10 +104,10 @@ int main(int argc,char* argv[])
                         close(sockfd);
                         pevents[i].data.fd = -1;
                     }
-                    if(strncmp(buf,"q\n",2)==0 || strncmp(buf,"Q\n",2)==0)
-                        printf("client %d is closed!\n",pevents[i].data.fd);
-                    else
-                    {
+                    // if(strncmp(buf,"q\n",2)==0 || strncmp(buf,"Q\n",2)==0)
+                    //     printf("client %d is closed!\n",pevents[i].data.fd);
+                    // else
+                    // {
                         // TODO:parse the buffer;
                         // TODO:mutile thred
                         // Json::Value book;
@@ -123,13 +123,14 @@ int main(int argc,char* argv[])
                         Operation* ta=new Operation;       //  具体的方法自己实现。
                         
                         ta->SetConnFd(pevents[i].data.fd);
-                        ta->setOpt(Otype::ADD);
+                        ta->setOpt(Otype(data["operat_type"].asInt()-1));
                         ta->SetConnFd(pevents[i].data.fd);
                         // std::string s = ;
                         ta->setDoing(data["name"].asString());
+                        ta->setData(data);
                         pool->AddTask(ta);
                         
-                    }
+                    // }
                     
                     // printf("received data: %s", buf);
 
@@ -141,16 +142,9 @@ int main(int argc,char* argv[])
                 }
                 else if(pevents[i].events & EPOLLOUT) {  //write
                     sockfd = pevents[i].data.fd;
-                    std::deque<std::pair<bool,std::string>> result = pool->getResuleQueue(sockfd);
-                    string s;
-                    
-                    for(auto iter = result.begin();iter!=result.end();iter++){
-                        s += iter->first?"success":"failed";
-                        s += " ";
-                        s += iter->second;
-                        s += "\n";
-                    }
-                    write(sockfd, s.c_str(), s.size());
+                    string s = pool->getResult(sockfd);
+                    if(!s.empty())
+                        write(sockfd, s.c_str(), s.size()+1);
 
                     // printf("written data: %s", buf);
 
