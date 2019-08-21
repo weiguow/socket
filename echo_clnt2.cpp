@@ -14,6 +14,8 @@
 #include <string.h>
 #include <vector>
 #include <sys/wait.h>
+#include <cctype>
+#include <typeinfo>
 
 
 #include "include/json/json.h"
@@ -31,6 +33,7 @@ std::string user_operator();
 void Draw_line(vector<string> vstr);
 void Draw_Datas(string str);
 int judge_Result(std::string &s);
+bool all_is_num(string str);
 
 
 sigset_t newset, zeroset;
@@ -234,10 +237,18 @@ std::string user_operator() {
          << "3.改动图书\n"
          << "4.查询图书\n"
          << "输入编号：" << std::endl;
+    begin:
     std::cin >> sTemp;
+
     if(sTemp == "q" || sTemp == "Q")
         return "q";
-    operat_type = atoi(sTemp.c_str());
+
+    if (all_is_num(sTemp)) {
+        operat_type = atoi(sTemp.c_str());
+    } else {
+        cout << "The input format is illegal. Please enter an integer" << endl;
+        goto begin;
+    }
 
     Json::Value book;
     std::string sbook;
@@ -277,8 +288,19 @@ std::string user_operator() {
                         << "3.图书简介\n"
                         << "输入编号：" << std::endl;
 
-                std::cin >> change_num;
+                begin_2:
+
+                std::cin >> sTemp;
+
+                if (all_is_num(sTemp)) {
+                    change_num = atoi(sTemp.c_str());
+                } else {
+                    cout << "The input format is illegal. Please enter an integer" << endl;
+                    goto begin_2;
+                }
+
                 book["change_num"] = change_num;
+
                 switch (change_num)
                 {
                     case 1:
@@ -305,8 +327,18 @@ std::string user_operator() {
 
             case 4:
                 book["operat_type"] = 4;
+
+                begin_3:
                 std::cout << "请输入图书编号: ";
-                std::cin >> book_id;
+
+                std::cin >> sTemp;
+
+                if (all_is_num(sTemp)) {
+                    book_id = atoi(sTemp.c_str());
+                } else {
+                    cout << "The input format is illegal. Please enter an integer" << endl;
+                    goto begin_3;
+                }
                 book["id"] = book_id;
                 break;
         default:std::cout << "The operating erro!" << std::endl;sbook = "";break;
@@ -383,4 +415,21 @@ int judge_Result(string &s){
     }
     std::cerr<<s<<std::endl;
     return 1;//failed
+}
+
+bool all_is_num(string str)
+{
+    for (int i = 0; i < str.size(); i++)
+    {
+        int tmp = (int)str[i];
+        if (tmp >= 48 && tmp <= 57)
+        {
+            continue;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return true;
 }
