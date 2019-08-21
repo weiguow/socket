@@ -167,6 +167,7 @@ void write_handling(int sock)
         if(body == "q")
         {
             shutdown(sock,SHUT_WR);
+            tell_parent(getppid());
             return;
         }
         if(!body.empty() && body!="q")
