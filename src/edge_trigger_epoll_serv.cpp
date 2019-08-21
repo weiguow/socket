@@ -149,7 +149,7 @@ int main(int argc,char* argv[])
                 else if(pevents[i].events & EPOLLOUT) {  //write
                     sockfd = pevents[i].data.fd;
                     string s = pool->getResult(sockfd);
-                    if(!s.empty())
+                    //if(!s.empty())
                         write(sockfd, s.c_str(), s.size()+1);
 
                     // printf("written data: %s", buf);
