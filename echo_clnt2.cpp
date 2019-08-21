@@ -65,7 +65,7 @@ void write_handling(int sock)
             shutdown(sock,SHUT_WR);
             return;
         }
-        if(!body.empty())
+        if(!body.empty() && body!="q")
             write(sock,body.c_str(),body.size());
     }
 }

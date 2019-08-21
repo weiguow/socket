@@ -21,6 +21,22 @@ private:
 public:
     Book(/* args */);
     ~Book();
+    inline int getBookId() const{
+        return nBookID;
+    }
+    inline void setBookId(const int bID){
+        nBookID = bID;
+    }
+    inline void setsBookName(const std::string s){
+        sBookName = s;
+    }
+    inline void setsAuthor(const std::string s){
+        sAuthor = s;
+    }
+    inline void setsBookDes(const std::string s){
+        sBookDes = s;
+    }
+    std::string to_string()const;
 };
 
 
@@ -40,6 +56,11 @@ public:
     __gnu_cxx::hash_map<int,Book> getMap(){
         return myMap;
     }
+    
+    int insertMap(Book b);
+    int DeteleMap(const int bId);
+    int searchMap(const int bId,Book &) const;
+    int modifyMap(const int bId,const int type,const std::string s);
 private:
 	Map()
 	{
