@@ -13,10 +13,9 @@ pair<bool,std::string> Operation::Run(pthread_t tid){
     Book b;
     bool returnflag = false;
     std::string retMessage = "";
-    int ntempID;
     switch(opt){
         case ADD:
-            b.setBookId(jData["id"].asInt());
+            b.setBookId(Map::instance()->getMap().size());
             b.setsBookName(jData["name"].asString());
             b.setsAuthor(jData["author"].asString());
             b.setsBookDes(jData["des"].asString());
@@ -41,7 +40,14 @@ pair<bool,std::string> Operation::Run(pthread_t tid){
             }
         break;
         case MODIFY:
-            
+            if(Map::instance()->modifyMap(jData["id"].asInt(),modify_type,jData[modifyMap[modify_type]].asString()) == -1){
+                returnflag = false;
+                retMessage = "modify error";
+            }
+            else{
+                returnflag = true;
+                retMessage = "success";
+            }
         break;
         case SEARCH:
             if(Map::instance()->searchMap(jData["id"].asInt(),b) == 0){
@@ -54,6 +60,7 @@ pair<bool,std::string> Operation::Run(pthread_t tid){
             }
         break;
         default:
+            returnflag = false;
             retMessage = "error operation type!";
         break;
     }
@@ -65,12 +72,12 @@ pair<bool,std::string> Operation::Run(pthread_t tid){
 
 Operation::Operation(/* args */)
 {
+    modifyMap.insert(pair<MTYPE,std::string>(AUTHOR,"author"));
+    modifyMap.insert(pair<MTYPE,std::string>(NAME,"name"));
+    modifyMap.insert(pair<MTYPE,std::string>(DES,"des"));
 }
 
 Operation::~Operation()
 {
 }
 
-int Operation::add(Book b){
-    
-}

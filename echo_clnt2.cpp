@@ -13,6 +13,8 @@
 #include <signal.h>
 #include <string.h>
 #include <vector>
+#include <sys/wait.h>
+
 
 #include "include/json/json.h"
 
@@ -23,17 +25,105 @@ using namespace std;
 
 
 void error_handling(const char* message,const int sock_port);
-void read_handling(const int sock);
+void read_handling(const int sock,const int pid);
 void write_handling(const int sock);
 std::string user_operator();
 void Draw_line(vector<string> vstr);
 void Draw_Datas(string str);
+int judge_Result(std::string &s);
+
+
+sigset_t newset, zeroset;
+static int counter = 1;
+static int sigFlag = 0;
+
+void sig_handler(int signo)
+{
+	if (signo == SIGUSR1 || signo == SIGUSR2)
+	{
+		sigFlag = 1;
+	}
+}
+ 
+void tell_wait()
+{
+	sigemptyset(&newset);
+	sigemptyset(&zeroset);
+	sigaddset(&newset, SIGUSR1);
+	sigaddset(&newset, SIGUSR2);
+	
+	struct sigaction action;
+	action.sa_handler = sig_handler;
+	sigemptyset(&action.sa_mask);
+	action.sa_flags = 0;
+	
+	if (sigaction(SIGUSR1, &action, NULL) < 0)
+	{
+		printf("sigaction error\n");
+		exit(-1);
+	}
+	
+	if (sigaction(SIGUSR2, &action, NULL) < 0)
+	{
+		printf("sigaction error\n");
+		exit(-1);
+	}
+	
+	if (sigprocmask(SIG_BLOCK, &newset, NULL) < 0)
+	{
+		printf("sigprocmask error\n");
+		exit(-1);
+	}
+}
+ 
+void tell_parent(pid_t pid)
+{
+	kill(pid, SIGUSR2);
+}
+ 
+void wait_parent()
+{
+	while(sigFlag == 0)
+	{
+		sigsuspend(&zeroset);
+	}
+	
+	sigFlag = 0;
+	
+	if (sigprocmask(SIG_BLOCK, &newset, NULL) < 0)
+	{
+		printf("set sigprocmask error\n");
+		exit(-1);
+	}
+}
+ 
+void tell_child(pid_t pid)
+{
+	kill(pid, SIGUSR1);
+}
+ 
+void wait_child()
+{
+	while(sigFlag == 0)
+	{
+		sigsuspend(&zeroset);
+	}
+	
+	sigFlag = 0;
+	
+	if (sigprocmask(SIG_BLOCK, &newset, NULL) < 0)
+	{
+		printf("set sigprocmask error\n");
+		exit(-1);
+	}
+}
 
 int main(int argc,char* argv[])
 {
     int sock;
     struct sockaddr_in addr;
     pid_t pid;
+    tell_wait();
     const char *address = (argc!=3?"127.0.0.1":argv[1]);
     int nPort = (argc!=3?MY_PORT:atoi(argv[2]));
 
@@ -53,10 +143,12 @@ int main(int argc,char* argv[])
     if(pid==0)
     {
         write_handling(sock);
+        
     }
     else
     {
-        read_handling(sock);
+        read_handling(sock,pid);
+        
     }
     close(sock);
     return 0;
@@ -66,33 +158,49 @@ int main(int argc,char* argv[])
 void write_handling(int sock)
 {
     //char buf[BUF_SIZE];
+    counter = 0;
     while(1)
     {
+        
+        counter += 2;
         std::string body = user_operator();
-        Draw_Datas( body);
         if(body == "q")
         {
             shutdown(sock,SHUT_WR);
             return;
         }
-        if(!body.empty())
+        if(!body.empty() && body!="q")
             write(sock,body.c_str(),body.size());
+        tell_parent(getppid());
+        wait_parent();
     }
+    
 }
 
 //读进程
-void read_handling(const int sock)
+void read_handling(const int sock,const int pid)
 {
     int str_len;
     char buf[BUF_SIZE];
+    counter = -1;
     while(1)
     {
+        wait_child();
+        counter += 2;
         str_len=read(sock,buf,BUF_SIZE-1);
         if(str_len<=0)
             return;
         buf[str_len]=0;
-        printf("the message from server:%s",buf);
+        
+        string result(buf);
+        //result.push_back(buf);
+        if(judge_Result(result)==0){
+            Draw_Datas(result);
+        }
+        tell_child(pid);
+        //printf("the message from server:%s",buf);
     }
+    waitpid(pid,NULL,0);
 }
 
 
@@ -111,6 +219,7 @@ void error_handling(const char* message,const int port)
  * 查询图书：输入 操作类型operat_type, 图书编号book_id
  * */
 std::string user_operator() {
+    
     int operat_type;  //用户操作类型,1.增加图书 2.删除图书 3.改动图书 4.查询图书
     int book_id;       //编号
     std::string book_name;  //书名
@@ -219,9 +328,10 @@ void Draw_line(vector<string> vstr)  //画行线
 
 void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
 {
+    if(Str.empty()) return;
     vector<string> header_element;
 //    int size = header_element.size();
-
+    //std::cout<<Str<<std::endl;
     header_element.push_back("book_id");
     header_element.push_back("book_name");
     header_element.push_back("book_author");
@@ -240,8 +350,8 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
     Json::Reader reader;
     Json::Value data;
     reader.parse(Str, data, false);
-
-    string book_id = data["id"].asString();
+    
+    string book_id = std::to_string(data["id"].asInt());
     std::string book_name = data["name"].asString();
     string book_author = data["author"].asString();
     string book_des = data["des"].asString();
@@ -254,10 +364,22 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
 
     for (int i = 0; i < dbook.size(); i++) {
         cout << "| " << setw(header_element[i].size()) << setiosflags(ios::left) << setfill(' ') ;
-        cout << dbook[i] << ' ';
+        cout << setw(header_element[i].size())<< dbook[i] << ' ';
     }
 
     cout << '|'<<endl;
 
     Draw_line(header_element);
+}
+
+
+int judge_Result(string &s){
+    if(s.empty()) return -1; //error
+    if(s[0] == 's' || s[1] == 's'){
+        s = s.substr(7);
+        //std::cout<<s<<std::endl;
+        return 0;
+    }
+    std::cerr<<s<<std::endl;
+    return 1;//failed
 }

@@ -7,25 +7,29 @@
 #include <string>
 #include "json/json.h"
 #include "Book.h"
+#include <map>
 
-enum Otype{
+enum OTYPE{
     ADD,
     DELETE,
     MODIFY,
     SEARCH
 };
+
 class Operation:public CTask
 {
 private:
     /* data */
-    Otype opt;
+    OTYPE opt;
     std::string sDoing;
     Json::Value jData;
+    MTYPE modify_type;
+    std::map<MTYPE,std::string> modifyMap;
 public:
     Operation(/* args */);
     ~Operation();
     pair<bool,std::string> Run(pthread_t);
-    inline int setOpt(Otype o){
+    inline int setOpt(OTYPE o){
         opt = o;
         return 0;
     };
@@ -35,6 +39,10 @@ public:
     };
     inline int setData(Json::Value Data){
         jData = Data;
+        return 0;
+    }
+    inline int setModifyType(MTYPE m){
+        modify_type = m;
         return 0;
     }
 private:

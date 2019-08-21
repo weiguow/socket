@@ -29,13 +29,23 @@ std::string Book::to_string()const{
 }
 
 int Map::insertMap(Book b){
-    myMap.insert(make_pair(b.getBookId(),b));
-    return 0;
+    auto it = myMap.find(b.getBookId());
+    if(it == myMap.end()){
+        myMap.insert(make_pair(b.getBookId(),b));
+        return 0;
+    }
+    else
+        return -1;
 }
 
 int Map::DeteleMap(const int bId){
-    myMap.erase(myMap.find(bId));
-    return 0;
+    auto it = myMap.find(bId);
+    if(it!=myMap.end()){ //find it
+        myMap.erase(it);
+        return 0;
+    }
+    else 
+        return -1;
 }
 
 int Map::searchMap(const int bId,Book &b)const{
@@ -48,20 +58,20 @@ int Map::searchMap(const int bId,Book &b)const{
         return -1;
 }
     
-int Map::modifyMap(const int bId,const int type,const std::string s)
+int Map::modifyMap(const int bId,MTYPE type,const std::string s)
 {
     auto it = myMap.find(bId);
     if(it == myMap.end())
         return -1;
     switch (type)
     {
-    case 1:
+    case NAME:
         it->second.setsBookName(s);
         break;
-    case 2:
+    case AUTHOR:
         it->second.setsAuthor(s);
         break;
-    case 3:
+    case DES:
         it->second.setsBookDes(s);
         break;
     default:

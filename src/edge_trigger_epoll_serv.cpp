@@ -98,7 +98,7 @@ int main(int argc,char* argv[])
                             close(sockfd);
                             pevents[i].data.fd = -1;
                         } else {
-                            printf("readline error");
+                            printf("readline error\n");
                         }
                     } else if(n == 0) {
                         close(sockfd);
@@ -123,10 +123,16 @@ int main(int argc,char* argv[])
                         Operation* ta=new Operation;       //  具体的方法自己实现。
                         
                         ta->SetConnFd(pevents[i].data.fd);
-                        ta->setOpt(Otype(data["operat_type"].asInt()-1));
+                        OTYPE opt = OTYPE(data["operat_type"].asInt()-1);
+                        //std::cout<<opt<<std::endl;
+                        ta->setOpt(opt);
+                        if(opt == OTYPE::MODIFY) //modify
+                            ta->setModifyType(MTYPE(data["change_num"].asInt()-1));
+                        //std::cout<<data["change_num"].asInt()-1<<std::endl;
+                        //std::cout<<data.toStyledString()<<std::endl;
                         ta->SetConnFd(pevents[i].data.fd);
                         // std::string s = ;
-                        ta->setDoing(data["name"].asString());
+                        //ta->setDoing(data["name"].asString());
                         ta->setData(data);
                         pool->AddTask(ta);
                         

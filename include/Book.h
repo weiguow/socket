@@ -10,6 +10,13 @@
 #include <hash_map>
 #endif
 using namespace std;
+
+enum MTYPE{
+    NAME,
+    AUTHOR,
+    DES
+};
+
 class Book
 {
 private:
@@ -60,7 +67,7 @@ public:
     int insertMap(Book b);
     int DeteleMap(const int bId);
     int searchMap(const int bId,Book &) const;
-    int modifyMap(const int bId,const int type,const std::string s);
+    int modifyMap(const int bId,MTYPE type,const std::string s);
 private:
 	Map()
 	{
