@@ -241,22 +241,21 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
     Json::Value data;
     reader.parse(Str, data, false);
 
-    int book_id = data["id"].asInt();
+    string book_id = data["id"].asString();
     std::string book_name = data["name"].asString();
     string book_author = data["author"].asString();
     string book_des = data["des"].asString();
 
-    cout << "| " << setw(header_element[].size()) << setiosflags(ios::left) << setfill(' ') ;
-    cout << book_id << ' ';
+    vector<string> dbook;
+    dbook.push_back(book_id);
+    dbook.push_back(book_name);
+    dbook.push_back(book_author);
+    dbook.push_back(book_des);
 
-    cout << "| " << setw(5) << setiosflags(ios::left) << setfill(' ') ;
-    cout << book_name << ' ';
-
-    cout << "| " << setw(5) << setiosflags(ios::left) << setfill(' ') ;
-    cout << book_author << ' ';
-
-    cout << "| " << setw(5) << setiosflags(ios::left) << setfill(' ') ;
-    cout << book_des << ' ';
+    for (int i = 0; i < dbook.size(); i++) {
+        cout << "| " << setw(header_element[i].size()) << setiosflags(ios::left) << setfill(' ') ;
+        cout << dbook[i] << ' ';
+    }
 
     cout << '|'<<endl;
 
