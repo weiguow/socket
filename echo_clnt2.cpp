@@ -1,3 +1,4 @@
+
 /*
  * @Author: Liangyuhang
  * @LastEditors: Liangyuhang
@@ -261,4 +262,3 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
 
     Draw_line(header_element);
 }
-
