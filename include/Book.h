@@ -4,11 +4,13 @@
  */
 #pragma once
 #include <string>
+#include "file_operations.h"
 #ifdef __GNUC__
 #include <ext/hash_map>
 #else
 #include <hash_map>
 #endif
+#define FILE_PATH "data.db"
 using namespace std;
 
 enum MTYPE{
@@ -69,14 +71,8 @@ public:
     int searchMap(const int bId,Book &) const;
     int modifyMap(const int bId,MTYPE type,const std::string s);
 private:
-	Map()
-	{
-	
-	}
-	~Map()
-	{
-		
-	}
+	Map();
+	~Map();
 
 private:
 	static Map* m_pInstance;

@@ -16,6 +16,7 @@
 #include "Operation.h"
 #include "Thread.h"
 #include "json/json.h"
+#include "CTimer.h"
 
 #define BUF_SIZE 1000
 #define EPOLL_SIZE 20
@@ -23,6 +24,8 @@
 
 void error_handler_socket(const char* message,const int port);
 void error_handler_epoll(const char* message,const int socket_port,const int epoll_fd);
+void read_data_file();
+void write_data_file();
 //void send_socket(epoll_event &events,epoll_event &event2,);
 int main(int argc,char* argv[])
 {
@@ -69,6 +72,9 @@ int main(int argc,char* argv[])
     //线程池初始化
     CThreadPoolProxy *pool = CThreadPoolProxy::instance();
     pevents=(epoll_event *)malloc(sizeof(struct epoll_event)*EPOLL_SIZE);
+    read_data_file();
+    CTimer *pTimer = new CTimer("timer 1");
+	pTimer->AsyncLoop(300*1000, write_data_file);
     if(pevents!=NULL){
         while(1)
         {
@@ -137,7 +143,7 @@ int main(int argc,char* argv[])
                         
                     // }
                     
-                    printf("received data: %s", data.toStyledString().c_str());
+                    //printf("received data: %s", data.toStyledString().c_str());
 
                     event.data.fd = sockfd;
                     event.events = EPOLLOUT | EPOLLET;
@@ -163,17 +169,20 @@ int main(int argc,char* argv[])
                             error_handler_epoll("epoll_ctl() error",nPort,ep_fd);
                     }
                     else{
-                        //printf("error\n");
+                        printf("server error\n");
                     }
                 }
             }
         }
+        
+        
         free(pevents);
     }
     else
     {
         fputs("malloc() error",stderr);
     }
+    
     pool->StopAll();
     close(ep_fd);
     close(serv_sock);
@@ -198,4 +207,36 @@ void error_handler_epoll(const char* message,const int socket_port,const int epo
     if(epoll_fd!=-1)
         close(epoll_fd);
     exit(1);
+}
+
+
+void read_data_file(){
+    vector<std::string> db;
+    if(readfile(FILE_PATH,db)!=0){
+        printf("read file error\n");
+        return;
+    }
+    Book b;
+    Json::Reader reader;
+    Json::Value jData;
+    for(string s:db){
+        reader.parse(s, jData, false);
+        b.setBookId(jData["id"].asInt());
+        b.setsBookName(jData["name"].asString());
+        b.setsAuthor(jData["author"].asString());
+        b.setsBookDes(jData["des"].asString());
+        Map::instance()->insertMap(b);
+    }
+}
+
+void write_data_file(){
+    vector<string> db;
+    //printf("test: 1\n");
+    for(std::pair<int,Book> b : Map::instance()->getMap()){
+        db.push_back((b.second).to_string()+"\n");
+    }
+    //printf("test: 2\n");
+    if(writefile(FILE_PATH,db)!=0){
+        printf("save the data error\n");
+    }
 }
