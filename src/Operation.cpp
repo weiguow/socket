@@ -26,13 +26,13 @@ pair<bool,std::string> Operation::Run(pthread_t tid){
             }
             else{
                 returnflag = true;
-                retMessage = "success";
+                retMessage = "ADD success";
             }
         break;
         case DELETE:
             if(Map::instance()->DeteleMap(jData["id"].asInt()) == 0){
                 returnflag = true;
-                retMessage = "success";
+                retMessage = "DELETE success";
             }
             else{
                 returnflag = false;

@@ -369,7 +369,17 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
     header_element.push_back("book_name");
     header_element.push_back("book_author");
     header_element.push_back("book_des");
-
+    Json::Reader reader;
+    Json::Value data;
+    reader.parse(Str, data, false);
+    
+    string book_id = std::to_string(data["id"].asInt());
+    std::string book_name = data["name"].asString();
+    string book_author = data["author"].asString();
+    string book_des = data["des"].asString();
+    if(book_name.empty() || book_author.empty() || book_des.empty())
+        return ;
+        
     Draw_line(header_element);
 
     for (int i = 0; i < header_element.size() ; i++) {
@@ -380,15 +390,7 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
 
     Draw_line(header_element);
 
-    Json::Reader reader;
-    Json::Value data;
-    reader.parse(Str, data, false);
     
-    string book_id = std::to_string(data["id"].asInt());
-    std::string book_name = data["name"].asString();
-    string book_author = data["author"].asString();
-    string book_des = data["des"].asString();
-
     vector<string> dbook;
     dbook.push_back(book_id);
     dbook.push_back(book_name);

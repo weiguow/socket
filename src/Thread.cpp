@@ -93,17 +93,14 @@ void* CThreadPool::ThreadFunc(void* threadData)
 }  
  
 std::string CThreadPool::getResult(int sockid){
-    std::deque<std::pair<bool,std::string>> result = taskMap[sockid];
+    if(taskMap[sockid].empty()) return "";
     string s;
-    if(result.empty()) return s;
-    for(auto iter = result.begin();iter!=result.end();iter++){
-        s += iter->first?"success":"failed";
-        s += " ";
-        s += iter->second;
-        s += "\n";
-    }
-    deque<std::pair<bool,std::string>> empty;
-    swap(empty, taskMap[sockid]);
+    std::pair<bool,std::string> result = taskMap[sockid].front();
+    s += result.first?"success":"failed";
+    s += " ";
+    s += result.second;
+    s += "\n";
+    taskMap[sockid].pop_front();
     return s;
 }  
  

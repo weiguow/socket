@@ -31,7 +31,6 @@ int main(int argc,char* argv[])
     socklen_t clnt_addr_sz;
     size_t n;
     char buf[BUF_SIZE];
-    int str_len;
 
     int ep_fd,ep_cnt,i,flag;
     struct epoll_event event;
@@ -122,7 +121,7 @@ int main(int argc,char* argv[])
                         reader.parse(buf, data, false);
                         Operation* ta=new Operation;       //  具体的方法自己实现。
                         
-                        ta->SetConnFd(pevents[i].data.fd);
+                        //ta->SetConnFd(pevents[i].data.fd);
                         OTYPE opt = OTYPE(data["operat_type"].asInt()-1);
                         //std::cout<<opt<<std::endl;
                         ta->setOpt(opt);
@@ -138,7 +137,7 @@ int main(int argc,char* argv[])
                         
                     // }
                     
-                    // printf("received data: %s", buf);
+                    printf("received data: %s", data.toStyledString().c_str());
 
                     event.data.fd = sockfd;
                     event.events = EPOLLOUT | EPOLLET;
@@ -148,17 +147,24 @@ int main(int argc,char* argv[])
                 }
                 else if(pevents[i].events & EPOLLOUT) {  //write
                     sockfd = pevents[i].data.fd;
-                    string s = pool->getResult(sockfd);
-                    //if(!s.empty())
+                    
+                    string s = "";
+                    while(s.empty())
+                        s= pool->getResult(sockfd);
+                    //printf("come in write\n");
+                    if(!s.empty()){
                         write(sockfd, s.c_str(), s.size()+1);
 
-                    // printf("written data: %s", buf);
-
-                    event.data.fd = sockfd;
-                    event.events = EPOLLIN | EPOLLET;
-                    epoll_ctl(ep_fd, EPOLL_CTL_MOD, sockfd, &event);
-                    if(ep_fd==-1)
-                        error_handler_epoll("epoll_ctl() error",nPort,ep_fd);
+                        //printf("written data: %s", s.c_str());
+                        event.data.fd = sockfd;
+                        event.events = EPOLLIN | EPOLLET;
+                        epoll_ctl(ep_fd, EPOLL_CTL_MOD, sockfd, &event);
+                        if(ep_fd==-1)
+                            error_handler_epoll("epoll_ctl() error",nPort,ep_fd);
+                    }
+                    else{
+                        //printf("error\n");
+                    }
                 }
             }
         }
