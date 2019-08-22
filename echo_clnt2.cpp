@@ -31,9 +31,10 @@ void read_handling(const int sock,const int pid);
 void write_handling(const int sock);
 std::string user_operator();
 void Draw_line(vector<string> vstr);
-void Draw_Datas(string str);
+void Draw_Datas(std::string str);
+int judge_input(std::string s);
 int judge_Result(std::string &s);
-bool all_is_num(string str);
+bool all_is_num(std::string str);
 
 
 sigset_t newset, zeroset;
@@ -229,25 +230,24 @@ std::string user_operator() {
     std::string book_name;  //书名
     std::string book_author;    //作者
     std::string book_des;   //简介
-    std::string sTemp;
 
-    std::cout << "===请选择操作编号===\n"
+    std::string sTemp;      //一级操作编号
+    std::string bTemp;      //二级操作编号
+
+    std::cout << "请选择操作编号\n"
          << "1.新增图书\n"
          << "2.删除图书\n"
          << "3.改动图书\n"
          << "4.查询图书\n"
-         << "输入编号：" << std::endl;
-    begin:
-    std::cin >> sTemp;
+         << "输q退出操作\n"
+         << "输入操作编号：";
 
-    if(sTemp == "q" || sTemp == "Q")
+    cin >> sTemp;
+
+    operat_type = judge_input(sTemp);
+
+    if (operat_type == -1) {
         return "q";
-
-    if (all_is_num(sTemp)) {
-        operat_type = atoi(sTemp.c_str());
-    } else {
-        cout << "The input format is illegal. Please enter an integer" << endl;
-        goto begin;
     }
 
     Json::Value book;
@@ -268,79 +268,87 @@ std::string user_operator() {
             break;
         }
 
-            case 2 : {
-                book["operat_type"] = 2;
-                std::cout << "请输入图书编号: ";
-                std::cin >> book_id;
-                book["id"] = book_id;
-                break;
+        case 2 : {
+            book["operat_type"] = 2;
+            cout << "请输入图书编号:";
+            cin >> sTemp;
+            book_id = judge_input(sTemp);
+            if (book_id == -1) {
+                return "q";
+            }
+            book["id"] = book_id;
+            break;
+        }
+
+        case 3:  //改动图书
+            book["operat_type"] = 3;
+            cout << "请输入图书编号:";
+            cin >> sTemp;
+            book_id = judge_input(sTemp);
+
+            if (book_id == -1) {
+                return "q";
             }
 
-            case 3:  //改动图书
-                int change_num;
-                book["operat_type"] = 3;
-                std::cout << "请输入图书编号: ";
-                std::cin >> book_id;
-                book["id"] = book_id;
-                std::cout << "===请选择需要修改信息的项目===\n"
-                        << "1.图书名称\n"
-                        << "2.图书作者\n"
-                        << "3.图书简介\n"
-                        << "输入编号：" << std::endl;
+            book["id"] = book_id;
 
-                begin_2:
+            std::cout << "请选择需要修改信息的项目\n"
+                    << "1.图书名称\n"
+                    << "2.图书作者\n"
+                    << "3.图书简介\n"
+                    << "输q退出操作\n"
+                    << "输入编号：";
 
-                std::cin >> sTemp;
+            int change_num;
+            cin >> sTemp;
+            change_num = judge_input(sTemp);
 
-                if (all_is_num(sTemp)) {
-                    change_num = atoi(sTemp.c_str());
-                } else {
-                    cout << "The input format is illegal. Please enter an integer" << endl;
-                    goto begin_2;
-                }
+            if (change_num == -1) {
+                return "q";
+            }
+            book["change_num"] = change_num;
 
-                book["change_num"] = change_num;
+            switch (change_num)
+            {
+                case 1:
+                    std::cout << "请输入你想修改的书名： ";
+                    std::cin >> book_name;
+                    book["name"] = book_name;
 
-                switch (change_num)
-                {
-                    case 1:
-                        std::cout << "请输入你想修改的书名： ";
-                        std::cin >> book_name;
-                        book["name"] = book_name;
-
-                    break;
-                    case 2:
-                        std::cout << "请输入修改后的作者名： ";
-                        std::cin >> book_author;
-                        book["author"] = book_author;
-
-                    break;
-                    case 3:
-                        std::cout << "请输入新简介： ";
-                        std::cin >> book_des;
-                        book["des"] = book_des;
-
-                    break;
-                    default:std::cout << "The operating erro! Invalid serial number" << std::endl;break;
-                }
                 break;
+                case 2:
+                    std::cout << "请输入修改后的作者名： ";
+                    std::cin >> book_author;
+                    book["author"] = book_author;
 
-            case 4:
-                book["operat_type"] = 4;
-
-                begin_3:
-                std::cout << "请输入图书编号: ";
-
-                std::cin >> sTemp;
-
-                if (all_is_num(sTemp)) {
-                    book_id = atoi(sTemp.c_str());
-                } else {
-                    cout << "The input format is illegal. Please enter an integer" << endl;
-                    goto begin_3;
-                }
-                book["id"] = book_id;
                 break;
+                case 3:
+                    std::cout << "请输入新简介： ";
+                    std::cin >> book_des;
+                    book["des"] = book_des;
+
+                break;
+                default:std::cout << "The operating erro! Invalid serial number" << std::endl;break;
+            }
+            break;
+
+        case 4:
+            book["operat_type"] = 4;
+            cout << "请输入图书编号：";
+            cin >> sTemp;
+            book_id = judge_input(sTemp);
+
+            if (book_id == -1) {
+                return "q";
+            }
+
+            book["id"] = book_id;
+            break;
+
+        case 5:
+            std::cout << "The operating erro!" << std::endl;
+            break;
+
         default:std::cout << "The operating erro!" << std::endl;sbook = "";break;
         }
     sbook = book.toStyledString();
@@ -349,7 +357,6 @@ std::string user_operator() {
 
 void Draw_line(vector<string> vstr)  //画行线
 {
-
     for (int i = 0; i < 4; i++) {
         cout << "+-";
         for (int k = 0; k < vstr[i].size() + 1; k++) {
@@ -363,8 +370,7 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
 {
     if(Str.empty()) return;
     vector<string> header_element;
-//    int size = header_element.size();
-    //std::cout<<Str<<std::endl;
+
     header_element.push_back("book_id");
     header_element.push_back("book_name");
     header_element.push_back("book_author");
@@ -390,7 +396,6 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
 
     Draw_line(header_element);
 
-    
     vector<string> dbook;
     dbook.push_back(book_id);
     dbook.push_back(book_name);
@@ -407,12 +412,32 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
     Draw_line(header_element);
 }
 
+int judge_input(string s) {
+
+    if (s == "q" || s == "Q") {
+        return -1;
+    }
+
+    int num;
+
+    while (!all_is_num(s)) {
+
+        if (s == "q" || s == "Q") {
+            return -1;
+        } else {
+            cout << "The input format is illegal. Please enter an integer" << endl;
+            cout << "清重新输入：";
+            std::cin >> s;
+        }
+    }
+    num = atoi(s.c_str());
+    return num;
+}
 
 int judge_Result(string &s){
     if(s.empty()) return -1; //error
     if(s[0] == 's' || s[1] == 's'){
         s = s.substr(7);
-        //std::cout<<s<<std::endl;
         return 0;
     }
     std::cerr<<s<<std::endl;
@@ -421,15 +446,11 @@ int judge_Result(string &s){
 
 bool all_is_num(string str)
 {
-    for (int i = 0; i < str.size(); i++)
-    {
+    for (int i = 0; i < str.size(); i++) {
         int tmp = (int)str[i];
-        if (tmp >= 48 && tmp <= 57)
-        {
+        if (tmp >= 48 && tmp <= 57) {
             continue;
-        }
-        else
-        {
+        } else {
             return false;
         }
     }
