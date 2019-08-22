@@ -4,6 +4,7 @@
  */
 #include "Book.h"
 #include <iostream>
+#include "json/json.h"
 
 Map* Map::m_pInstance = NULL;
 __gnu_cxx::hash_map<int,Book> Map::myMap;
@@ -27,6 +28,16 @@ std::string Book::to_string()const{
     s += ",\"des\":\"" + sBookDes + "\"}";
     return s;
 }
+
+
+Map::Map(){
+    
+}
+
+Map::~Map(){
+    
+}
+
 
 int Map::insertMap(Book b){
     auto it = myMap.find(b.getBookId());
