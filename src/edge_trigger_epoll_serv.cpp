@@ -27,165 +27,196 @@ void error_handler_epoll(const char* message,const int socket_port,const int epo
 void read_data_file();
 void write_data_file();
 //void send_socket(epoll_event &events,epoll_event &event2,);
-int main(int argc,char* argv[])
+int socket_bind(const int port)
 {
-    int serv_sock = 0,clnt_sock,sockfd;
-    struct sockaddr_in serv_addr,clnt_addr;
-    socklen_t clnt_addr_sz;
-    size_t n;
-    char buf[BUF_SIZE];
-
-    int ep_fd,ep_cnt,i,flag;
-    struct epoll_event event;
-    struct epoll_event* pevents;
-    int nPort = (argc!=2?SOCKET_PORT:atoi(argv[1]));
-    
-    serv_sock=socket(AF_INET,SOCK_STREAM,0);
-    if(serv_sock == -1)
-        error_handler_socket("socket() error",serv_sock);
+    int  listenfd;
+    struct sockaddr_in servaddr;
+    listenfd = socket(AF_INET,SOCK_STREAM,0);
+    if (listenfd == -1)
+    {
+        error_handler_socket("socket() error",listenfd);
+    }
+    bzero(&servaddr,sizeof(servaddr));
     int bReuseaddr=1;
-    setsockopt(serv_sock,SOL_SOCKET ,SO_REUSEADDR,(const char*)&bReuseaddr,sizeof(int));// no wait
+    setsockopt(listenfd,SOL_SOCKET ,SO_REUSEADDR,(const char*)&bReuseaddr,sizeof(int));// no wait
 
-    memset(&serv_addr,0,sizeof(serv_addr));
-    serv_addr.sin_family=AF_INET;
-    serv_addr.sin_addr.s_addr=htonl(INADDR_ANY);
-    serv_addr.sin_port=htons(nPort);
+    servaddr.sin_family = AF_INET;
+    //inet_pton(AF_INET,ip,&servaddr.sin_addr);
+    servaddr.sin_family=AF_INET;
+    servaddr.sin_addr.s_addr=htonl(INADDR_ANY);
+    servaddr.sin_port = htons(port);
+    if (bind(listenfd,(struct sockaddr*)&servaddr,sizeof(servaddr)) == -1)
+    {
+       error_handler_socket("bind() error",listenfd);
 
-    if(bind(serv_sock,(struct sockaddr*)&serv_addr,sizeof(serv_addr))==-1)
-        error_handler_socket("bind() error",serv_sock);
+    }
+    return listenfd;
+}
 
-    if(listen(serv_sock,5)==-1)
-        error_handler_socket("listen() error",serv_sock);
+void add_event(int epollfd,int fd,int state)
+{
+    struct epoll_event ev;
+    ev.events = state;
+    ev.data.fd = fd;
+    epoll_ctl(epollfd,EPOLL_CTL_ADD,fd,&ev);
+    if(epollfd==-1)
+        error_handler_epoll("epoll_ctl() error",fd,epollfd);
+}
 
-    ep_fd=epoll_create(EPOLL_SIZE);
-    if(ep_fd==-1)
-        error_handler_epoll("epoll_create() error",nPort,ep_fd);
+void delete_event(int epollfd,int fd,int state)
+{
+    struct epoll_event ev;
+    ev.events = state;
+    ev.data.fd = fd;
+    epoll_ctl(epollfd,EPOLL_CTL_DEL,fd,&ev);
+}
 
-    event.events=EPOLLIN | EPOLLET;
-    event.data.fd=serv_sock;
-    epoll_ctl(ep_fd,EPOLL_CTL_ADD,serv_sock,&event);
-    if(ep_fd==-1)
-        error_handler_epoll("epoll_ctl() error",nPort,ep_fd);
-    
-    //pthread_t tid = 0;
-    // pthread_create(&tid, NULL, EventHandle, (void*)this == 0);  
-    //线程池初始化
-    CThreadPoolProxy *pool = CThreadPoolProxy::instance();
-    pevents=(epoll_event *)malloc(sizeof(struct epoll_event)*EPOLL_SIZE);
-    read_data_file();
-    CTimer *pTimer = new CTimer("timer 1");
-	pTimer->AsyncLoop(300*1000, write_data_file);
-    if(pevents!=NULL){
-        while(1)
-        {
-            ep_cnt=epoll_wait(ep_fd,pevents,EPOLL_SIZE,10);
-            for(i=0;i<ep_cnt;i++)
-            {
-                if(serv_sock==pevents[i].data.fd) //新接入
-                {
-                    clnt_addr_sz=sizeof(clnt_addr);
-                    clnt_sock=accept(serv_sock,(struct sockaddr*)&clnt_addr,&(clnt_addr_sz));
-                    //将套接字设置成非阻塞模式
-                    flag=fcntl(clnt_sock,F_GETFL,0);
-                    fcntl(clnt_sock,F_SETFL,flag|O_NONBLOCK);
+void modify_event(int epollfd,int fd,int state)
+{
+    struct epoll_event ev;
+    ev.events = state;
+    ev.data.fd = fd;
+    epoll_ctl(epollfd,EPOLL_CTL_MOD,fd,&ev);
+}
+void handle_accpet(int epollfd,int listenfd)
+{
+    int clifd;
+    struct sockaddr_in cliaddr;
+    socklen_t  cliaddrlen;
+    clifd = accept(listenfd,(struct sockaddr*)&cliaddr,&cliaddrlen);
+    if (clifd == -1)
+        perror("accpet error:");
+    else
+    {
+        //将套接字设置成非阻塞模式
+        int flag=fcntl(clifd,F_GETFL,0);
+        fcntl(clifd,F_SETFL,flag|O_NONBLOCK);
+        printf("accept a new client: %s:%d\n",inet_ntoa(cliaddr.sin_addr),cliaddr.sin_port);
+        //添加一个客户描述符和事件
+        add_event(epollfd,clifd,EPOLLIN);
+    }
+}
 
-                    event.events=EPOLLIN|EPOLLET;
-                    event.data.fd=clnt_sock;
-                    epoll_ctl(ep_fd,EPOLL_CTL_ADD,clnt_sock,&event);
-                    if(ep_fd==-1)
-                        error_handler_epoll("epoll_ctl() error",nPort,ep_fd);
-                }
-                else if(pevents[i].events & EPOLLIN) { //read
-                    if((sockfd = pevents[i].data.fd) < 0) continue;
-                    memset(buf,0,BUF_SIZE);
-                    if((n = read(sockfd, buf, BUF_SIZE)) < 0) {
-                        if(errno == ECONNRESET) {
-                            close(sockfd);
-                            pevents[i].data.fd = -1;
-                        } else {
-                            printf("readline error\n");
-                        }
-                    } else if(n == 0) {
-                        close(sockfd);
-                        pevents[i].data.fd = -1;
-                    }
-                    // if(strncmp(buf,"q\n",2)==0 || strncmp(buf,"Q\n",2)==0)
-                    //     printf("client %d is closed!\n",pevents[i].data.fd);
-                    // else
-                    // {
-                        // TODO:parse the buffer;
-                        // TODO:mutile thred
-                        // Json::Value book;
-                        // book["id"] = "123";
-                        // book["name"] = "android";
-                        // book["author"] = "wangweiguo";
-                        // book["des"] = "1";
-                        // std::string body = book.toStyledString();
-                        // std::cout<<book["name"]<<std::endl;
-                        Json::Reader reader;
-                        Json::Value data;
-                        reader.parse(buf, data, false);
-                        Operation* ta=new Operation;       //  具体的方法自己实现。
-                        
-                        //ta->SetConnFd(pevents[i].data.fd);
-                        OTYPE opt = OTYPE(data["operat_type"].asInt()-1);
-                        //std::cout<<opt<<std::endl;
-                        ta->setOpt(opt);
-                        if(opt == OTYPE::MODIFY) //modify
-                            ta->setModifyType(MTYPE(data["change_num"].asInt()-1));
-                        //std::cout<<data["change_num"].asInt()-1<<std::endl;
-                        //std::cout<<data.toStyledString()<<std::endl;
-                        ta->SetConnFd(pevents[i].data.fd);
-                        // std::string s = ;
-                        //ta->setDoing(data["name"].asString());
-                        ta->setData(data);
-                        pool->AddTask(ta);
-                        
-                    // }
-                    
-                    //printf("received data: %s", data.toStyledString().c_str());
-
-                    event.data.fd = sockfd;
-                    event.events = EPOLLOUT | EPOLLET;
-                    epoll_ctl(ep_fd, EPOLL_CTL_MOD, sockfd, &event);
-                    if(ep_fd==-1)
-                        error_handler_epoll("epoll_ctl() error",nPort,ep_fd);                
-                }
-                else if(pevents[i].events & EPOLLOUT) {  //write
-                    sockfd = pevents[i].data.fd;
-                    
-                    string s = "";
-                    while(s.empty())
-                        s= pool->getResult(sockfd);
-                    //printf("come in write\n");
-                    if(!s.empty()){
-                        write(sockfd, s.c_str(), s.size()+1);
-
-                        //printf("written data: %s", s.c_str());
-                        event.data.fd = sockfd;
-                        event.events = EPOLLIN | EPOLLET;
-                        epoll_ctl(ep_fd, EPOLL_CTL_MOD, sockfd, &event);
-                        if(ep_fd==-1)
-                            error_handler_epoll("epoll_ctl() error",nPort,ep_fd);
-                    }
-                    else{
-                        printf("server error\n");
-                    }
-                }
-            }
-        }
-        
-        
-        free(pevents);
+void do_read(int epollfd,int fd,char *buf)
+{
+    int nread;
+    memset(buf,0,BUF_SIZE);
+    nread = read(fd,buf,BUF_SIZE);
+    if (nread == -1)
+    {
+        perror("read error:");
+        close(fd);
+        delete_event(epollfd,fd,EPOLLIN);
+    }
+    else if (nread == 0)
+    {
+        fprintf(stderr,"client close.\n");
+        close(fd);
+        delete_event(epollfd,fd,EPOLLIN);
     }
     else
     {
-        fputs("malloc() error",stderr);
+        Json::Reader reader;
+        Json::Value data;
+        reader.parse(buf, data, false);
+        Operation* ta=new Operation;
+        
+        OTYPE opt = OTYPE(data["operat_type"].asInt()-1);
+        ta->setOpt(opt);
+        if(opt == OTYPE::MODIFY) //modify
+            ta->setModifyType(MTYPE(data["change_num"].asInt()-1));
+        ta->SetConnFd(fd);
+        ta->setData(data);
+        CThreadPoolProxy::instance()->AddTask(ta);
+        //修改描述符对应的事件，由读改为写
+        modify_event(epollfd,fd,EPOLLOUT);
     }
+
+}
+
+static void do_write(int epollfd,int fd,char *buf)
+{
+    int nwrite;
+    string s = "";
+    while(s.empty())
+        s = CThreadPoolProxy::instance()->getResult(fd);
+    //printf("come in write\n");
+    if(!s.empty()){
+        nwrite = write(fd, s.c_str(), s.size()+1);
+    }
+    else{
+        printf("server error\n");
+    }
+    if (nwrite == -1)
+    {
+        perror("write error:");
+        close(fd);
+        delete_event(epollfd,fd,EPOLLOUT);
+    }
+    else
+        modify_event(epollfd,fd,EPOLLIN);
+}
+
+void handle_events(int epollfd,struct epoll_event *events,int num,int listenfd,char *buf)
+{
+    int i;
+    int fd;
+    //进行选好遍历
+    for (i = 0;i < num;i++)
+    {
+        fd = events[i].data.fd;
+        //根据描述符的类型和事件类型进行处理
+        if ((fd == listenfd) &&(events[i].events & EPOLLIN))
+            handle_accpet(epollfd,listenfd);
+        else if (events[i].events & EPOLLIN)
+            do_read(epollfd,fd,buf);
+        else if (events[i].events & EPOLLOUT)
+            do_write(epollfd,fd,buf);
+    }
+}
+
+void do_epoll(int listenfd)
+{
+    int epollfd;
+    struct epoll_event* pevents;
+    int ret;
+    char buf[BUF_SIZE];
+    memset(buf,0,BUF_SIZE);
+    //创建一个描述符
+    epollfd=epoll_create(EPOLL_SIZE);
+    if(epollfd==-1)
+        error_handler_epoll("epoll_create() error",listenfd,epollfd);
     
-    pool->StopAll();
-    close(ep_fd);
-    close(serv_sock);
+    pevents=(epoll_event *)malloc(sizeof(struct epoll_event)*EPOLL_SIZE);
+    if(pevents == NULL){
+        printf("malloc error()");
+        exit(1);
+    }
+    //添加监听描述符事件
+    add_event(epollfd,listenfd,EPOLLIN);
+    while(1)
+    {
+        //获取已经准备好的描述符事件
+        ret = epoll_wait(epollfd,pevents,EPOLL_SIZE,-1);
+        handle_events(epollfd,pevents,ret,listenfd,buf);
+    }
+    close(epollfd);
+    close(listenfd);
+}
+
+int main(int argc,char* argv[])
+{
+    int serv_sock = 0;
+    int nPort = (argc!=2?SOCKET_PORT:atoi(argv[1]));
+    serv_sock = socket_bind(nPort);
+    read_data_file();
+    CTimer *pTimer = new CTimer("timer 1");
+	pTimer->AsyncLoop(5*1000, write_data_file);
+    if(listen(serv_sock,5)==-1)
+        error_handler_socket("listen() error",serv_sock);
+
+    do_epoll(serv_sock);
+
     return 0;
 }
 void error_handler_socket(const char* message,const int port)

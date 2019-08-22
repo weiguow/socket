@@ -168,6 +168,8 @@ void write_handling(int sock)
         
         counter += 2;
         std::string body = user_operator();
+        while(body=="error")
+            body = user_operator();
         if(body == "q")
         {
             shutdown(sock,SHUT_WR);
@@ -349,7 +351,7 @@ std::string user_operator() {
             std::cout << "The operating erro!" << std::endl;
             break;
 
-        default:std::cout << "The operating erro!" << std::endl;sbook = "";break;
+        default:std::cout << "The operating erro!" << std::endl;return "error";break;
         }
     sbook = book.toStyledString();
     return sbook;

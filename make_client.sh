@@ -6,3 +6,4 @@
 g++ -c jsoncpp.cpp -o jsoncpp.o
 g++ -c echo_clnt2.cpp -o echo_clnt2.o
 g++ echo_clnt2.o jsoncpp.o -o client
+rm -f *.o

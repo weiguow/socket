@@ -23,7 +23,7 @@ int readfile(const char * FilePath,vector<string> &data) {
     fstream in;
     in.open(FilePath, ios::in);//打开一个file
     if (!in.is_open()) {
-        cout << "Can not find " << FilePath << endl;
+        printf("please goto the output/ and run the server");
         return -1;
     }
     string buff;
