@@ -234,15 +234,14 @@ std::string user_operator() {
     std::string book_des;   //简介
 
     std::string sTemp;      //一级操作编号
-    std::string bTemp;      //二级操作编号
 
-    std::cout << "请选择操作编号\n"
-         << "1.新增图书\n"
-         << "2.删除图书\n"
-         << "3.改动图书\n"
-         << "4.查询图书\n"
-         << "输q退出操作\n"
-         << "输入操作编号：";
+    std::cout << "Please select operation num\n"
+         << "1.Add Book\n"
+         << "2.Delete Book\n"
+         << "3.Modify Book\n"
+         << "4.Search Book\n"
+         << "Exit q\n"
+         << "Input operation num:";
 
     cin >> sTemp;
 
@@ -258,13 +257,13 @@ std::string user_operator() {
     switch (operat_type) {
         case 1:{
             book["operat_type"] = 1;
-            std::cout << "请输入你想添加的书名： ";
+            std::cout << "book name:";
             std::cin >> book_name;
             book["name"] = book_name;
-            std::cout << "请输入该书作者： ";
+            std::cout << "book author:";
             std::cin >> book_author;
             book["author"] = book_author;
-            std::cout << "请输入该书简介： ";
+            std::cout << "book des:";
             std::cin >> book_des;
             book["des"] = book_des;
             break;
@@ -272,7 +271,7 @@ std::string user_operator() {
 
         case 2 : {
             book["operat_type"] = 2;
-            cout << "请输入图书编号:";
+            cout << "Please input book id:";
             cin >> sTemp;
             book_id = judge_input(sTemp);
             if (book_id == -1) {
@@ -284,7 +283,7 @@ std::string user_operator() {
 
         case 3:  //改动图书
             book["operat_type"] = 3;
-            cout << "请输入图书编号:";
+            cout << "Please input book id:";
             cin >> sTemp;
             book_id = judge_input(sTemp);
 
@@ -294,12 +293,12 @@ std::string user_operator() {
 
             book["id"] = book_id;
 
-            std::cout << "请选择需要修改信息的项目\n"
-                    << "1.图书名称\n"
-                    << "2.图书作者\n"
-                    << "3.图书简介\n"
-                    << "输q退出操作\n"
-                    << "输入编号：";
+            std::cout << "Please select type you want change\n"
+                    << "1.Book Name\n"
+                    << "2.Book Author\n"
+                    << "3.Book Description\n"
+                    << "Exit q\n"
+                    << "Input operation num:";
 
             int change_num;
             cin >> sTemp;
@@ -313,19 +312,19 @@ std::string user_operator() {
             switch (change_num)
             {
                 case 1:
-                    std::cout << "请输入你想修改的书名： ";
+                    std::cout << "Enter the book name you want to change:";
                     std::cin >> book_name;
                     book["name"] = book_name;
 
                 break;
                 case 2:
-                    std::cout << "请输入修改后的作者名： ";
+                    std::cout << "Enter the book author you want to change:";
                     std::cin >> book_author;
                     book["author"] = book_author;
 
                 break;
                 case 3:
-                    std::cout << "请输入新简介： ";
+                    std::cout << "Enter the book description you want to change:";
                     std::cin >> book_des;
                     book["des"] = book_des;
 
@@ -336,7 +335,7 @@ std::string user_operator() {
 
         case 4:
             book["operat_type"] = 4;
-            cout << "请输入图书编号：";
+            cout << "Please input book id:";
             cin >> sTemp;
             book_id = judge_input(sTemp);
 
@@ -385,8 +384,11 @@ void Draw_Datas(string Str) //显示构造过程，状态转换矩阵
     std::string book_name = data["name"].asString();
     string book_author = data["author"].asString();
     string book_des = data["des"].asString();
-    if(book_name.empty() || book_author.empty() || book_des.empty())
+    if(book_name.empty() || book_author.empty() || book_des.empty()){
+        cout << Str << endl;
         return ;
+    }
+
         
     Draw_line(header_element);
 
@@ -423,12 +425,11 @@ int judge_input(string s) {
     int num;
 
     while (!all_is_num(s)) {
-
         if (s == "q" || s == "Q") {
             return -1;
         } else {
             cout << "The input format is illegal. Please enter an integer" << endl;
-            cout << "清重新输入：";
+            cout << "请重新输入：";
             std::cin >> s;
         }
     }
@@ -442,7 +443,7 @@ int judge_Result(string &s){
         s = s.substr(7);
         return 0;
     }
-    std::cerr<<s<<std::endl;
+    std::cout<<s<<std::endl;
     return 1;//failed
 }
 
