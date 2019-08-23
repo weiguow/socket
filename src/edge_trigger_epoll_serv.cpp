@@ -97,9 +97,10 @@ void handle_accpet(int epollfd,int listenfd)
     }
 }
 
-void do_read(int epollfd,int fd,char *buf)
+void do_read(int epollfd,int fd)
 {
     int nread;
+    char buf[BUF_SIZE];
     memset(buf,0,BUF_SIZE);
     nread = read(fd,buf,BUF_SIZE);
     if (nread == -1)
@@ -134,7 +135,7 @@ void do_read(int epollfd,int fd,char *buf)
 
 }
 
-void do_write(int epollfd,int fd,char *buf)
+void do_write(int epollfd,int fd)
 {
     int nwrite;
     string s = "";
@@ -157,7 +158,7 @@ void do_write(int epollfd,int fd,char *buf)
         modify_event(epollfd,fd,EPOLLIN);
 }
 
-void handle_events(int epollfd,struct epoll_event *events,int num,int listenfd,char *buf)
+void handle_events(int epollfd,struct epoll_event *events,int num,int listenfd)
 {
     int i;
     int fd;
@@ -169,9 +170,9 @@ void handle_events(int epollfd,struct epoll_event *events,int num,int listenfd,c
         if ((fd == listenfd) &&(events[i].events & EPOLLIN))
             handle_accpet(epollfd,listenfd);
         else if (events[i].events & EPOLLIN)
-            do_read(epollfd,fd,buf);
+            do_read(epollfd,fd);
         else if (events[i].events & EPOLLOUT)
-            do_write(epollfd,fd,buf);
+            do_write(epollfd,fd);
     }
 }
 
