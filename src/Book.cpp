@@ -30,7 +30,7 @@ std::string Book::to_string()const{
 }
 
 
-Map::Map(){
+Map::Map():count(0){
     
 }
 
@@ -43,6 +43,7 @@ int Map::insertMap(Book b){
     auto it = myMap.find(b.getBookId());
     if(it == myMap.end()){
         myMap.insert(make_pair(b.getBookId(),b));
+        count++;
         return 0;
     }
     else

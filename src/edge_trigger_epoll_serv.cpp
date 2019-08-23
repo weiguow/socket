@@ -181,8 +181,6 @@ void do_epoll(int listenfd)
     int epollfd;
     struct epoll_event* pevents;
     int ret;
-    char buf[BUF_SIZE];
-    memset(buf,0,BUF_SIZE);
     //创建一个描述符
     epollfd=epoll_create(EPOLL_SIZE);
     if(epollfd==-1)
@@ -199,7 +197,7 @@ void do_epoll(int listenfd)
     {
         //获取已经准备好的描述符事件
         ret = epoll_wait(epollfd,pevents,EPOLL_SIZE,-1);
-        handle_events(epollfd,pevents,ret,listenfd,buf);
+        handle_events(epollfd,pevents,ret,listenfd);
     }
     close(epollfd);
     close(listenfd);

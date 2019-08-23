@@ -15,7 +15,7 @@ pair<bool,std::string> Operation::Run(pthread_t tid){
     std::string retMessage = "";
     switch(opt){
         case ADD:
-            b.setBookId(Map::instance()->getMap().size());
+            b.setBookId(Map::instance()->getCount());
             b.setsBookName(jData["name"].asString());
             b.setsAuthor(jData["author"].asString());
             b.setsBookDes(jData["des"].asString());

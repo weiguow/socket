@@ -70,6 +70,9 @@ public:
     int DeteleMap(const int bId);
     int searchMap(const int bId,Book &) const;
     int modifyMap(const int bId,MTYPE type,const std::string s);
+    inline int getCount()const {
+        return count;
+    }
 private:
 	Map();
 	~Map();
@@ -77,4 +80,5 @@ private:
 private:
 	static Map* m_pInstance;
     static __gnu_cxx::hash_map<int,Book> myMap;
+    int count;
 };
