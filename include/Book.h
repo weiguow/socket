@@ -77,5 +77,4 @@ private:
 private:
 	static Map* m_pInstance;
     static __gnu_cxx::hash_map<int,Book> myMap;
-	//CThreadPool* m_pthreadpool;
 };
