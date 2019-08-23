@@ -40,13 +40,19 @@ Map::~Map(){
 
 
 int Map::insertMap(Book b){
-    auto it = myMap.find(b.getBookId());
-    if(it == myMap.end()){
+
+    if(myMap.find(b.getBookId()) == myMap.end()){
         myMap.insert(make_pair(b.getBookId(),b));
-        count++;
+        
         return 0;
     }
-    else
+    else{
+        while(myMap.find(count) != myMap.end())
+            count++;
+        b.setBookId(count);
+        myMap.insert(make_pair(count,b));
+        return 0;
+    }
         return -1;
 }
 
