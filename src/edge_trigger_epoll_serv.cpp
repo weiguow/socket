@@ -134,7 +134,7 @@ void do_read(int epollfd,int fd,char *buf)
 
 }
 
-static void do_write(int epollfd,int fd,char *buf)
+void do_write(int epollfd,int fd,char *buf)
 {
     int nwrite;
     string s = "";

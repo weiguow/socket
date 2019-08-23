@@ -46,7 +46,7 @@ pair<bool,std::string> Operation::Run(pthread_t tid){
             }
             else{
                 returnflag = true;
-                retMessage = "success";
+                retMessage = "MODIFY success";
             }
         break;
         case SEARCH:
