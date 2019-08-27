@@ -24,20 +24,27 @@ child = pexpect.spawn(client)
 n = 0
 while n < 1000:
     # Add Book
-    file_add_log = open("./add_log", mode='ab+')
-    child.logfile = file_add_log
+    # file_add_log = open("./add_log", mode='ab+')
+    # child.logfile = file_add_log
 
     child.expect("Input operation num:")
     child.sendline("1")
 
+    print(n, "########ADD BOOK#########")
+    book_name = random_str()
+    print("book name: ", book_name,)
     child.expect("book name")
-    child.sendline(random_str())
+    child.sendline(book_name)
 
+    book_author = random_str()
+    print("book author is: ", book_author)
     child.expect("book author")
-    child.sendline(random_str())
+    child.sendline(book_author)
 
+    book_des = random_str()
+    print("book des is: ", book_des)
     child.expect("book des")
-    child.sendline(random_str())
+    child.sendline(book_des)
 
     n += 1
 

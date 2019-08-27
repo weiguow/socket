@@ -18,10 +18,10 @@ async def hello():
 
 
 def run():
-    for i in range(10):
+    for i in range(100):
         loop.run_until_complete(hello())
 
 
 loop = asyncio.get_event_loop()
 run()
-print("success rate is ", n / 1000)
+print("success rate is ", n / 100)

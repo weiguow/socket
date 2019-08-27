@@ -19,33 +19,35 @@ def random_str():
     return ran_str
 
 
-start = time.clock()
+start = time.time()
 # 启动客户端
 child = pexpect.spawn(client)
 
 # 进行100增删改查操作次操作
 n = 0
-while n < 1000:
+while n < 100:
     a = random.randint(2, 5)
     child.expect("Input operation num:")
     child.sendline(str(a))
 
     if a == 2:
+        b = random.randint(0, 999)
         # print("####DELETE_BOOK####")
-        b = random.randint(0, 1000)
-        file_delete_log = open("./delete_log", mode='ab+')
-        child.logfile = file_delete_log
+        # print("book id is: ", b)
+        # file_delete_log = open("./delete_log", mode='ab+')
+        # child.logfile = file_delete_log
         child.expect("Please input book id")
         child.sendline(str(b))
 
     elif a == 3:
-        # print("####MODIFY_BOOK####")
-        b = random.randint(0, 1000)
+        b = random.randint(0, 999)
         c = random.randint(1, 3)
 
-        file_modify_log = open("./modify_log", mode='ab+')
-        child.logfile = file_modify_log
+        # file_modify_log = open("./modify_log", mode='ab+')
+        # child.logfile = file_modify_log
 
+        # print("####MODIFY_BOOK####")
+        # print("book id is: ", b)
         child.expect("Please input book id:")
         child.sendline(str(b))
 
@@ -65,16 +67,17 @@ while n < 1000:
             child.sendline(random_str())
 
     elif a == 4:
+        b = random.randint(0, 999)
         # print("####SEARCH_BOOK####")
-        b = random.randint(0, 1000)
-        file_search_log = open("./search_log", mode='ab+')
-        child.logfile = file_search_log
+        # print("book id is: ", b)
+        # file_search_log = open("./search_log", mode='ab+')
+        # child.logfile = file_search_log
         child.expect("Please input book id:")
         child.sendline(str(b))
 
     n += 1
 
-end = time.clock()
+end = time.time()
 run_time = end - start
 print(run_time)
 
